@@ -43,7 +43,7 @@ impl Server {
     fn process_request(&self, buffer: &[u8]) {
         match Request::try_from(buffer) {
             Ok(request) => {
-                dbg!(request);
+                dbg!(request.path, request.method, request.query_string);
             }
             Err(error) => {
                 println!("Failed to parse request: {:?}", error);
