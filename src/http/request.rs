@@ -1,15 +1,7 @@
-use crate::http::Method;
+use crate::http::{Method, ParseError};
+use std::str;
 
 #[derive(Debug)]
-pub enum ParseError {
-    InvalidRequest,
-    InvalidMethod,
-    InvalidPath,
-    InvalidQueryString,
-    InvalidProtocol,
-}
-
-
 pub struct Request {
     path: String,
     method: Method,
@@ -18,8 +10,17 @@ pub struct Request {
 
 impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
-    
+
     fn try_from(buffer: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
+        match str::from_utf8(buffer) {
+            Ok(raw_request) => {
+                Ok(Request {
+                    path: String::from("/"),
+                    method: Method::GET,
+                    query_string: None,
+                })
+            }
+            Err(_) => Err(ParseError::InvalidEncoding)
+        }
     }
 }
