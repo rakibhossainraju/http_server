@@ -12,15 +12,12 @@ impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
 
     fn try_from(buffer: &[u8]) -> Result<Self, Self::Error> {
-        match str::from_utf8(buffer) {
-            Ok(raw_request) => {
-                Ok(Request {
-                    path: String::from("/"),
-                    method: Method::GET,
-                    query_string: None,
-                })
-            }
-            Err(_) => Err(ParseError::InvalidEncoding)
-        }
+        let raw_request = str::from_utf8(buffer)?;
+
+        Ok(Request {
+            path: String::from("/"),
+            method: Method::GET,
+            query_string: None,
+        })
     }
 }

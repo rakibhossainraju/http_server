@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
+use std::str::Utf8Error;
 
 pub enum ParseError {
     InvalidRequest,
@@ -23,6 +24,12 @@ impl Debug for ParseError {
 }
 
 impl Error for ParseError {}
+
+impl From<Utf8Error> for ParseError {
+    fn from(_: Utf8Error) -> Self {
+        Self::InvalidEncoding
+    }
+}
 
 impl ParseError {
     fn message(&self) -> &str {
