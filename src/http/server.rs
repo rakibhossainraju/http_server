@@ -1,6 +1,6 @@
-use std::io::Read;
-use std::net::TcpListener;
 use crate::http::Request;
+use std::io::Read;
+use std::net::{TcpListener, TcpStream};
 
 pub struct Server {
     address: String,
@@ -15,21 +15,8 @@ impl Server {
         let listener = TcpListener::bind(&self.address).unwrap();
         loop {
             match listener.accept() {
-                Ok((mut stream, _)) => {
-                    let mut buffer = [0; 1024];
-                    match stream.read(&mut buffer) {
-                        Ok(_) => {
-                            match Request::try_from(&buffer as &[u8]) {
-                                Ok(request) => {}
-                                Err(error) => {
-                                    println!("Failed to parse request: {:?}", error);
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            println!("Failed to read from stream: {}", err);
-                        }
-                    }
+                Ok((stream, _)) => {
+                    self.handle_connection(stream);
                 }
                 Err(e) => {
                     println!("Failed to accept connection: {}", e);
@@ -37,7 +24,30 @@ impl Server {
             }
         }
     }
+
     pub fn stop(self) {
         println!("Stopping server at {}", self.address);
+    }
+
+    fn handle_connection(&self, mut stream: TcpStream) {
+        let mut buffer = [0; 1024];
+        match stream.read(&mut buffer) {
+            Ok(size) => {
+                self.process_request(&buffer[..size]);
+            }
+            Err(err) => {
+                println!("Failed to read from stream: {}", err);
+            }
+        }
+    }
+    fn process_request(&self, buffer: &[u8]) {
+        match Request::try_from(buffer) {
+            Ok(request) => {
+                dbg!(request);
+            }
+            Err(error) => {
+                println!("Failed to parse request: {:?}", error);
+            }
+        };
     }
 }
