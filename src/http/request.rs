@@ -1,14 +1,4 @@
-enum Method {
-    GET,
-    POST,
-    PUT,
-    DELETE,
-    PATCH,
-    HEAD,
-    OPTIONS,
-    TRACE,
-    CONNECT,
-}
+use crate::http::Method;
 
 pub struct Request {
     path: String,
