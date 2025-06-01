@@ -3,9 +3,9 @@ use std::str;
 
 #[derive(Debug)]
 pub struct Request {
-    path: String,
-    method: Method,
-    query_string: Option<String>,
+    pub path: String,
+    pub method: Method,
+    pub query_string: Option<String>,
 }
 
 enum AllowedProtocol {
