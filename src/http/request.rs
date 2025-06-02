@@ -2,10 +2,10 @@ use crate::http::{Method, ParseError};
 use std::str;
 
 #[derive(Debug)]
-pub struct Request {
-    pub path: String,
+pub struct Request<'buff> {
+    pub path: &'buff str,
     pub method: Method,
-    pub query_string: Option<String>,
+    pub query_string: Option<&'buff str>,
 }
 
 enum AllowedProtocol {
@@ -20,28 +20,28 @@ impl AllowedProtocol {
     }
 }
 
-impl TryFrom<&[u8]> for Request {
+impl<'buff> TryFrom<&'buff[u8]> for Request<'buff> {
     type Error = ParseError;
 
-    fn try_from(buffer: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(buffer: &'buff[u8]) -> Result<Self, Self::Error> {
         let raw_request = str::from_utf8(buffer)?;
 
         let (method, rest) = Self::get_next_word(raw_request).ok_or(ParseError::InvalidRequest)?;
         let method = Method::from_str(method).ok_or(ParseError::InvalidMethod)?;
         let (path, rest) = Self::get_next_word(rest).ok_or(ParseError::InvalidRequest)?;
         let (protocol, _) = Self::get_next_word(rest).ok_or(ParseError::InvalidRequest)?;
+        let query_string = path.split('?').nth(1);
         AllowedProtocol::from_str(protocol).ok_or(ParseError::InvalidProtocol)?;
 
-
-        Ok(Request {
-            path: path.to_string(),
+        Ok(Self {
+            path,
             method,
-            query_string: None,
+            query_string,
         })
     }
 }
 
-impl Request {
+impl<'buff> Request<'buff> {
     fn get_next_word(req_str: &str) -> Option<(&str, &str)> {
         for (idx, char) in req_str.chars().enumerate() {
             if char == ' ' || char == '\r' || char == '\n' {
