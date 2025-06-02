@@ -1,7 +1,7 @@
 use crate::http::response::Response;
 use crate::http::{Request, StatusCode};
-use std::io::{Read, Write};
-use std::net::{Shutdown, TcpListener, TcpStream};
+use std::io::{Error as IoError, Read};
+use std::net::{TcpListener, TcpStream};
 
 pub struct Server {
     address: String,
@@ -21,7 +21,9 @@ impl Server {
         loop {
             match listener.accept() {
                 Ok((stream, _)) => {
-                    self.handle_connection(stream);
+                    if self.handle_connection(stream).is_err() {
+                        eprintln!("Failed to handle connection");
+                    };
                 }
                 Err(e) => {
                     println!("Failed to accept connection: {}", e);
@@ -34,19 +36,14 @@ impl Server {
         println!("Stopping server at {}", self.address);
     }
 
-    fn handle_connection(&self, mut stream: TcpStream) {
+    fn handle_connection(&self, mut stream: TcpStream) -> Result<(), IoError> {
         let mut buffer = [0; 1024];
-        match stream.read(&mut buffer) {
-            Ok(size) => {
-                let response = self.process_request(&buffer[..size]);
-                self.write_and_close_stream(&mut stream, response);
-            }
-            Err(err) => {
-                let response = Response::new(StatusCode::InternalServerError, Some(err.to_string()));
-                self.write_and_close_stream(&mut stream, response);
-            }
-        }
+        let size = stream.read(&mut buffer)?;
+        let response = self.process_request(&buffer[..size]);
+        response.send(&mut stream)?;
+        Ok(())
     }
+
     fn process_request(&self, buffer: &[u8]) -> Response {
         match Request::try_from(buffer) {
             Ok(request) => {
@@ -55,14 +52,6 @@ impl Server {
             Err(error) => {
                 Response::new(StatusCode::InternalServerError, Some(error.to_string()))
             }
-        }
-    }
-    fn write_and_close_stream(&self, stream: &mut TcpStream, response: Response) {
-        if let Err(err) = write!(stream, "{}", response)
-            .and_then(|_| stream.flush())
-            .and_then(|_| stream.shutdown(Shutdown::Write))
-        {
-            eprintln!("Failed to write response: {}", err);
         }
     }
 }
