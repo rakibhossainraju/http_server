@@ -10,5 +10,6 @@ pub use methods::Method;
 pub use parse_error::ParseError;
 pub use query_string::QueryString;
 pub use request::Request;
+pub use response::Response;
 pub use server::Server;
 pub use status_code::StatusCode;
