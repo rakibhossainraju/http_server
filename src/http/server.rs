@@ -1,5 +1,7 @@
-use crate::http::Request;
-use std::io::Read;
+use crate::http::response::Response;
+use crate::http::{Request, StatusCode};
+use std::fmt::Display;
+use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 
 pub struct Server {
@@ -37,17 +39,21 @@ impl Server {
         let mut buffer = [0; 1024];
         match stream.read(&mut buffer) {
             Ok(size) => {
-                self.process_request(&buffer[..size]);
+                // self.process_request(&buffer[..size]);
+                let response = Response::new(StatusCode::Ok, Some("<h1>Is it working</h1>".to_string()));
+                write!(stream, "{}", response).unwrap();
+                stream.flush().unwrap();
+                // stream.shutdown(std::net::Shutdown::Write).unwrap();
             }
             Err(err) => {
-                println!("Failed to read from stream: {}", err);
+                println!("Failed to read request: {}", err);
             }
         }
     }
     fn process_request(&self, buffer: &[u8]) {
         match Request::try_from(buffer) {
             Ok(request) => {
-                dbg!(request.path, request.method, request.query_string);
+                // dbg!(request);
             }
             Err(error) => {
                 println!("Failed to parse request: {:?}", error);
