@@ -4,15 +4,19 @@ use std::net::{TcpListener, TcpStream};
 
 pub struct Server {
     address: String,
+    port: u16,
 }
 
 impl Server {
     pub fn new(address: String, port: u16) -> Self {
-        Server { address: address + ":" + &port.to_string() }
+        Server { address, port }
     }
 
     pub fn start(&self) {
-        let listener = TcpListener::bind(&self.address).unwrap();
+        let address = format!("{}:{}", self.address, self.port);
+        let listener = TcpListener::bind(address).unwrap();
+        println!("Server started at http://localhost:{}", self.port);
+
         loop {
             match listener.accept() {
                 Ok((stream, _)) => {
