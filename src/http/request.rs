@@ -20,10 +20,10 @@ impl AllowedProtocol {
     }
 }
 
-impl<'buff> TryFrom<&'buff[u8]> for Request<'buff> {
+impl<'buff> TryFrom<&'buff [u8]> for Request<'buff> {
     type Error = ParseError;
 
-    fn try_from(buffer: &'buff[u8]) -> Result<Self, Self::Error> {
+    fn try_from(buffer: &'buff [u8]) -> Result<Self, Self::Error> {
         let raw_request = str::from_utf8(buffer)?;
 
         let (method, rest) = Self::get_next_word(raw_request).ok_or(ParseError::InvalidRequest)?;
