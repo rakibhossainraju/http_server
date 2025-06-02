@@ -1,11 +1,11 @@
-use crate::http::{Method, ParseError};
+use crate::http::{Method, ParseError, QueryString};
 use std::str;
 
 #[derive(Debug)]
 pub struct Request<'buff> {
     pub path: &'buff str,
     pub method: Method,
-    pub query_string: Option<&'buff str>,
+    pub query_string: Option<QueryString<'buff>>,
 }
 
 enum AllowedProtocol {
@@ -30,8 +30,8 @@ impl<'buff> TryFrom<&'buff [u8]> for Request<'buff> {
         let method = Method::from_str(method).ok_or(ParseError::InvalidMethod)?;
         let (path, rest) = Self::get_next_word(rest).ok_or(ParseError::InvalidRequest)?;
         let (protocol, _) = Self::get_next_word(rest).ok_or(ParseError::InvalidRequest)?;
-        let query_string = path.split('?').nth(1);
         AllowedProtocol::from_str(protocol).ok_or(ParseError::InvalidProtocol)?;
+        let query_string = path.split('?').nth(1).map(QueryString::from);
 
         Ok(Self {
             path,
