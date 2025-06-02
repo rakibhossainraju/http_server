@@ -1,8 +1,7 @@
 use crate::http::response::Response;
 use crate::http::{Request, StatusCode};
-use std::fmt::Display;
 use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::net::{Shutdown, TcpListener, TcpStream};
 
 pub struct Server {
     address: String,
@@ -39,25 +38,31 @@ impl Server {
         let mut buffer = [0; 1024];
         match stream.read(&mut buffer) {
             Ok(size) => {
-                // self.process_request(&buffer[..size]);
-                let response = Response::new(StatusCode::Ok, Some("<h1>Is it working</h1>".to_string()));
-                write!(stream, "{}", response).unwrap();
-                stream.flush().unwrap();
-                // stream.shutdown(std::net::Shutdown::Write).unwrap();
+                let response = self.process_request(&buffer[..size]);
+                self.write_and_close_stream(&mut stream, response);
             }
             Err(err) => {
-                println!("Failed to read request: {}", err);
+                let response = Response::new(StatusCode::InternalServerError, Some(err.to_string()));
+                self.write_and_close_stream(&mut stream, response);
             }
         }
     }
-    fn process_request(&self, buffer: &[u8]) {
+    fn process_request(&self, buffer: &[u8]) -> Response {
         match Request::try_from(buffer) {
             Ok(request) => {
-                // dbg!(request);
+                Response::new(StatusCode::Ok, Some("<h1>Hello World</h1>".to_string()))
             }
             Err(error) => {
-                println!("Failed to parse request: {:?}", error);
+                Response::new(StatusCode::InternalServerError, Some(error.to_string()))
             }
-        };
+        }
+    }
+    fn write_and_close_stream(&self, stream: &mut TcpStream, response: Response) {
+        if let Err(err) = write!(stream, "{}", response)
+            .and_then(|_| stream.flush())
+            .and_then(|_| stream.shutdown(Shutdown::Write))
+        {
+            eprintln!("Failed to write response: {}", err);
+        }
     }
 }
