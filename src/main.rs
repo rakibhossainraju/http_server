@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 mod http;
+mod website_handler;
+
 use http::Server;
+use website_handler::WebsiteHandler;
 
 fn main() {
     let server = Server::new("127.0.0.1".to_string(), 8080);
-    server.start();
+    
+    server.start(WebsiteHandler{});
     // server.stop();
 }
