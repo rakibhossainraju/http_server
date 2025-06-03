@@ -4,7 +4,9 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 pub enum StatusCode {
     Ok = 200,
     BadRequest = 400,
+    Forbidden = 403,
     NotFound = 404,
+    MethodNotAllowed = 405,
     InternalServerError = 500,
 }
 
@@ -13,7 +15,9 @@ impl StatusCode {
         match self {
             Self::Ok => "OK",
             Self::BadRequest => "Bad Request",
+            Self::Forbidden => "Forbidden",
             Self::NotFound => "Not Found",
+            Self::MethodNotAllowed => "Method Not Allowed",
             Self::InternalServerError => "Internal Server Error",
         }
     }
