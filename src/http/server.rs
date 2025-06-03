@@ -10,7 +10,7 @@ pub struct Server {
 }
 
 pub trait Handler {
-    fn handle_request(&mut self, _: &Request) -> Response {
+    fn handle_request(&self, _: &Request) -> Response {
         Response::new(StatusCode::Ok, Some("Default Implementation".to_string()))
     }
     fn handle_bad_request(&self, err: &dyn Error) -> Response {
@@ -29,7 +29,7 @@ impl Server {
         Server { address, port }
     }
 
-    pub fn start(&self, mut handler: impl Handler) {
+    pub fn start(&self, handler: impl Handler) {
         let address = format!("{}:{}", self.address, self.port);
         let listener = TcpListener::bind(address).unwrap();
         println!("Server started at http://localhost:{}", self.port);
@@ -37,7 +37,7 @@ impl Server {
         loop {
             match listener.accept() {
                 Ok((stream, _)) => {
-                    if self.handle_connection(&mut handler, stream).is_err() {
+                    if self.handle_connection(&handler, stream).is_err() {
                         eprintln!("Failed to handle connection");
                     };
                 }
@@ -54,7 +54,7 @@ impl Server {
 
     fn handle_connection(
         &self,
-        handler: &mut impl Handler,
+        handler: &impl Handler,
         mut stream: TcpStream,
     ) -> Result<(), IoError> {
         let mut buffer = [0; 1024];
